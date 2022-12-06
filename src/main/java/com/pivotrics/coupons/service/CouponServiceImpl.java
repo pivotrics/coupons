@@ -75,8 +75,10 @@ public class CouponServiceImpl implements CouponService {
 				&& request.getCouponDetails().isApplied()) {
 			GeneratedCoupons couponDetails = generatedCouponsRepository
 					.findByCouponCode(request.getCouponDetails().getCouponCode());
-			couponDetails.setRedeemed(true);
-			generatedCouponsRepository.save(couponDetails);
+			if (couponDetails != null) {
+				couponDetails.setRedeemed(true);
+				generatedCouponsRepository.save(couponDetails);
+			}
 		}
 	}
 
@@ -119,18 +121,13 @@ public class CouponServiceImpl implements CouponService {
 		List<GeneratedCoupons> couponDetails = generatedCouponsRepository.findByCustomerPhoneNo(customerPhoneNo);
 		if (couponDetails != null && couponDetails.size() > 0) {
 			GeneratedCoupons coupon = couponDetails.get(0);
-			couponDetailsResponse.setCouponCode(coupon.getCouponCode());
 
 			List<Rules> rules = rulesRepository.findRuleByIssuerAndTragetStore(coupon.getIssuerStore().toString(),
 					targetStore);
 			if (rules != null && rules.size() > 0) {
-
 				Rules rule = rules.get(0);
-
-				coupon.setRedeemed(true);
-
+				couponDetailsResponse.setCouponCode(coupon.getCouponCode());
 				couponDetailsResponse.setDiscount(rule.getDiscount());
-
 			}
 
 		}

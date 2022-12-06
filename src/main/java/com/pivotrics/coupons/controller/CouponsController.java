@@ -59,8 +59,13 @@ public class CouponsController {
 	public ResponseEntity<String> addOrderDetails(@RequestBody TransactionRequest transactionRequest) {
 
 		Transactions response = couponService.createTransaction(transactionRequest);
+		logger.info("Order details saved succesfully");
 		GeneratedCoupons generatedCoupons = couponService.assignCouponToCustomer(transactionRequest);
-		logger.info("inside addOrderDetails " + transactionRequest.toString());
+
+		if (generatedCoupons != null && generatedCoupons.getCouponCode() != null) {
+			logger.info("Coupon code generated for user. Coupon code: " + generatedCoupons.getCouponCode()
+					+ " Customer Phone No.: " + generatedCoupons.getCustomerPhoneNo());
+		}
 
 		return ResponseEntity.status(HttpStatus.CREATED).body("order details added successfully");
 	}
@@ -80,7 +85,7 @@ public class CouponsController {
 	public ResponseEntity<List<CouponCodes>> addRules(@RequestBody CouponCodeRequest couponCodeRequest) {
 
 		List<CouponCodes> response = couponService.addCouponCode(couponCodeRequest);
-		logger.info("rules added successfully");
+		logger.info("coupon code added successfully");
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
@@ -88,10 +93,14 @@ public class CouponsController {
 			MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<CouponDetailsResponse> getCouponCode(@RequestBody GetCouponCodeRequestModel request) {
 
-
 		CouponDetailsResponse response = couponService.getCouponCode(request.getStoreId(), request.customerPhoneNo);
-		
-		logger.info("Coupon code retrieved successfully");
+		if (response != null && response.getCouponCode() != null) {
+			logger.info("Coupon code retrieved successfully. Coupon code:" + response.getCouponCode());
+		} else {
+			logger.info("No Coupon code is available for this user");
+		}
+		logger.debug("Testing debug logs");
+
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
