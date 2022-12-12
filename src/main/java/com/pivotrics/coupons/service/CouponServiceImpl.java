@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.pivotrics.coupons.data.CouponCodes;
 import com.pivotrics.coupons.data.CouponCodesRepository;
+import com.pivotrics.coupons.data.DiscountType;
 import com.pivotrics.coupons.data.GeneratedCoupons;
 import com.pivotrics.coupons.data.GeneratedCouponsRepository;
 import com.pivotrics.coupons.data.OrderDetails;
@@ -21,6 +22,7 @@ import com.pivotrics.coupons.data.Transactions;
 import com.pivotrics.coupons.data.TransactionsRepository;
 import com.pivotrics.coupons.model.CouponCodeRequest;
 import com.pivotrics.coupons.model.CouponDetailsResponse;
+import com.pivotrics.coupons.model.GetCouponCodeRequestModel;
 import com.pivotrics.coupons.model.RulesRequestModel;
 import com.pivotrics.coupons.model.TransactionRequest;
 
@@ -84,7 +86,7 @@ public class CouponServiceImpl implements CouponService {
 	}
 
 	@Override
-	public Rules addRules(RulesRequestModel request) {
+		public Rules addRules(RulesRequestModel request) {
 
 		Rules rules = new Rules();
 		rules.setIssuer(request.getIssuer());
@@ -95,12 +97,15 @@ public class CouponServiceImpl implements CouponService {
 	}
 
 	@Override
-	public GeneratedCoupons assignCouponToCustomer(TransactionRequest request) {
+	public GeneratedCoupons assignCouponToCustomer(TransactionRequest request, DiscountType discounType ) {
 		GeneratedCoupons coupon = new GeneratedCoupons();
 		coupon.setCustomerPhoneNo(request.getPhoneNumber());
 		coupon.setIssuerStore(request.getStoreId());
 		coupon.setRedeemed(false);
-		String couponCode = request.getStoreId() + (long) (Math.random() * Math.pow(10, 8));
+		coupon.setSessionId(request.getSessionId());
+		coupon.setDiscountType(discounType);
+		System.out.print(discounType);
+		String couponCode = String.valueOf((long) (Math.random() * Math.pow(10, 10)));
 		coupon.setCouponCode(couponCode.toString().toUpperCase());
 		GeneratedCoupons response = generatedCouponsRepository.save(coupon);
 		return response;
@@ -116,10 +121,12 @@ public class CouponServiceImpl implements CouponService {
 	}
 
 	@Override
-	public CouponDetailsResponse getCouponCode(String targetStore, String customerPhoneNo) {
+	public CouponDetailsResponse getCouponCode(TransactionRequest request) {
 
 		CouponDetailsResponse couponDetailsResponse = new CouponDetailsResponse();
-		List<GeneratedCoupons> couponDetails = generatedCouponsRepository.findByCustomerPhoneNo(customerPhoneNo);
+		String targetStore = request.getStoreId();
+		List<GeneratedCoupons> couponDetails = generatedCouponsRepository
+				.findByCustomerPhoneNo(request.getPhoneNumber());
 		if (couponDetails != null && couponDetails.size() > 0) {
 			GeneratedCoupons coupon = couponDetails.get(0);
 
@@ -127,14 +134,42 @@ public class CouponServiceImpl implements CouponService {
 					targetStore);
 			if (rules != null && rules.size() > 0) {
 				Rules rule = rules.get(0);
+				coupon.setRuleId(rule.getRuleId());
+				generatedCouponsRepository.save(coupon);
 				couponDetailsResponse.setCouponCode(coupon.getCouponCode());
 				couponDetailsResponse.setDiscount(rule.getDiscount());
 			}
-
 		}
-
+		
+		GeneratedCoupons internalCoupon = getInternalCoupon(request);
+		
+		if(internalCoupon != null) {
+			
+			Rules rule = rulesRepository.findRuleByIssuerAndDiscountType(internalCoupon.getIssuerStore().toString(),
+					DiscountType.INTERNAL_LOYALTY.name());
+			if (rule != null && rule.getDiscount() > couponDetailsResponse.getDiscount()  ) {
+				internalCoupon.setRuleId(rule.getRuleId());
+				generatedCouponsRepository.save(internalCoupon);
+				couponDetailsResponse.setCouponCode(internalCoupon.getCouponCode());
+				couponDetailsResponse.setDiscount(rule.getDiscount());
+			}
+		}
 		// TODO Auto-generated method stub
 		return couponDetailsResponse;
+	}
+
+	private GeneratedCoupons getInternalCoupon(TransactionRequest request) {
+		
+		GeneratedCoupons coupon = null;
+		
+		coupon = generatedCouponsRepository.findBySessionId(request.getSessionId());
+		
+		if(coupon == null) {
+			coupon =  assignCouponToCustomer(request, DiscountType.INTERNAL_LOYALTY);		  	
+		} 
+		
+		// TODO Auto-generated method stub
+		return coupon;
 	}
 
 }

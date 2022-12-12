@@ -16,7 +16,8 @@ public class Stores implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int storeId;
+	private int sid;
+	private String storeId;
 	private String storeName;
 	private String storeUrl;
 	
@@ -36,4 +37,5 @@ public class Stores implements Serializable {
 	public void setStoreUrl(String storeUrl) {
 		this.storeUrl = storeUrl;
 	}
+	
 }

@@ -9,6 +9,8 @@ public class TransactionRequest {
 	private OrderDetails orderDetails;
 	private CouponDetails couponDetails;
 	private CustomerDetails customerDetails;
+	private String sessionId;
+	
 
 	public String getStoreId() {
 		return storeId;
@@ -42,14 +44,20 @@ public class TransactionRequest {
 		this.orderDetails = cartDetails;
 	}
 	
-	
-	
 	public CustomerDetails getCustomerDetails() {
 		return customerDetails;
 	}
 
 	public void setCustomerDetails(CustomerDetails customerDetails) {
 		this.customerDetails = customerDetails;
+	}
+	
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
 	}
 
 	@Override

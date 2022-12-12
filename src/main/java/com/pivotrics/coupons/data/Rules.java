@@ -3,6 +3,8 @@ package com.pivotrics.coupons.data;
 import java.io.Serializable;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -19,6 +21,8 @@ public class Rules implements Serializable {
 	private String issuer;
 	private String targetStore;
 	private double discount;
+	@Enumerated(EnumType.STRING)
+    private DiscountType discountType;	
 
 	public String getIssuer() {
 		return issuer;
@@ -43,5 +47,19 @@ public class Rules implements Serializable {
 	public void setDiscount(double discount) {
 		this.discount = discount;
 	}
+
+	public int getRuleId() {
+		return ruleId;
+	}
+
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+	public DiscountType getDiscountType() {
+		return discountType;
+	}
+	
 
 }

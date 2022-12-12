@@ -12,6 +12,11 @@ public interface RulesRepository extends CrudRepository<Rules, Long> {
 	List<Rules> findRuleByIssuerAndTragetStore(String issuer, String targetStore);
 	
 	
+	@Query(value = "SELECT * FROM Rules r WHERE r.issuer = ?1 and r.discount_type=?2", 
+			  nativeQuery = true)
+	Rules findRuleByIssuerAndDiscountType(String issuer, String discountType);
+	
+	
 	
 }
 

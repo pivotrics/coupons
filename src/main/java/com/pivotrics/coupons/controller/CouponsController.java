@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pivotrics.coupons.data.CouponCodes;
+import com.pivotrics.coupons.data.DiscountType;
 import com.pivotrics.coupons.data.GeneratedCoupons;
 import com.pivotrics.coupons.data.Rules;
 import com.pivotrics.coupons.data.Stores;
 import com.pivotrics.coupons.data.Transactions;
 import com.pivotrics.coupons.model.CouponCodeRequest;
 import com.pivotrics.coupons.model.CouponDetailsResponse;
-import com.pivotrics.coupons.model.GetCouponCodeRequestModel;
 import com.pivotrics.coupons.model.RulesRequestModel;
 import com.pivotrics.coupons.model.TransactionRequest;
 import com.pivotrics.coupons.service.CouponService;
@@ -54,13 +54,13 @@ public class CouponsController {
 		return listStores;
 	}
 
-	@PostMapping(value = "/order-details", consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {
+	@PostMapping(value = "/order-details", consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {
 			MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<String> addOrderDetails(@RequestBody TransactionRequest transactionRequest) {
 
 		Transactions response = couponService.createTransaction(transactionRequest);
 		logger.info("Order details saved succesfully");
-		GeneratedCoupons generatedCoupons = couponService.assignCouponToCustomer(transactionRequest);
+		GeneratedCoupons generatedCoupons = couponService.assignCouponToCustomer(transactionRequest, DiscountType.EXTERNAL_REWARD);
 
 		if (generatedCoupons != null && generatedCoupons.getCouponCode() != null) {
 			logger.info("Coupon code generated for user. Coupon code: " + generatedCoupons.getCouponCode()
@@ -91,11 +91,11 @@ public class CouponsController {
 
 	@PostMapping(value = "/get-coupon-code", consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {
 			MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<CouponDetailsResponse> getCouponCode(@RequestBody GetCouponCodeRequestModel request) {
+	public ResponseEntity<CouponDetailsResponse> getCouponCode(@RequestBody TransactionRequest request) {
 
-		CouponDetailsResponse response = couponService.getCouponCode(request.getStoreId(), request.customerPhoneNo);
+		CouponDetailsResponse response = couponService.getCouponCode(request);
 		if (response != null && response.getCouponCode() != null) {
-			logger.info("Coupon code retrieved successfully. Coupon code:" + response.getCouponCode());
+			logger.info("Coupon code retrieved successfully. Discount: " + response.getDiscount() + "% Coupon code:" + response.getCouponCode() );
 		} else {
 			logger.info("No Coupon code is available for this user");
 		}

@@ -1,12 +1,17 @@
 package com.pivotrics.coupons.data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 @Entity
 @Table(name = "generatedCoupons")
@@ -21,6 +26,28 @@ public class GeneratedCoupons implements Serializable {
 	private String couponCode;
 	private double discount;
 	private boolean redeemed;
+	@Enumerated(EnumType.STRING)
+	private DiscountType discountType;
+	private String sessionId;
+	private int ruleId;
+	@Temporal(TemporalType.TIMESTAMP)
+	Date creationDateTime;
+
+	public Date getCreationDateTime() {
+		return creationDateTime;
+	}
+
+	public void setCreationDateTime(Date creationDateTime) {
+		this.creationDateTime = creationDateTime;
+	}
+
+	public DiscountType getDiscountType() {
+		return discountType;
+	}
+
+	public void setDiscountType(DiscountType discountType) {
+		this.discountType = discountType;
+	}
 
 	public String getIssuerStore() {
 		return issuerStore;
@@ -66,7 +93,20 @@ public class GeneratedCoupons implements Serializable {
 		return gcId;
 	}
 
+	public String getSessionId() {
+		return sessionId;
+	}
 
-	
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
+	}
+
+	public int getRuleId() {
+		return ruleId;
+	}
+
+	public void setRuleId(int ruleId) {
+		this.ruleId = ruleId;
+	}
 
 }
