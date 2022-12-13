@@ -22,7 +22,7 @@ public interface CouponService {
 
 	Rules addRules(RulesRequestModel request);
 
-	GeneratedCoupons assignCouponToCustomer(TransactionRequest request, DiscountType discounType);
+	GeneratedCoupons assignCouponToCustomer(TransactionRequest request, DiscountType discounType, Integer transId);
 
 	List<CouponCodes> addCouponCode(CouponCodeRequest request);
 

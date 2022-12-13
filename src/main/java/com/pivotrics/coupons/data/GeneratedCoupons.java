@@ -3,6 +3,8 @@ package com.pivotrics.coupons.data;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.hibernate.annotations.UpdateTimestamp;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -28,18 +30,14 @@ public class GeneratedCoupons implements Serializable {
 	private boolean redeemed;
 	@Enumerated(EnumType.STRING)
 	private DiscountType discountType;
-	private String sessionId;
-	private int ruleId;
+
 	@Temporal(TemporalType.TIMESTAMP)
-	Date creationDateTime;
+	@UpdateTimestamp
+	private java.util.Date createdOn;
 
-	public Date getCreationDateTime() {
-		return creationDateTime;
-	}
-
-	public void setCreationDateTime(Date creationDateTime) {
-		this.creationDateTime = creationDateTime;
-	}
+	private String sessionId;
+	private Integer ruleId;
+	private Integer transId;
 
 	public DiscountType getDiscountType() {
 		return discountType;
@@ -101,12 +99,20 @@ public class GeneratedCoupons implements Serializable {
 		this.sessionId = sessionId;
 	}
 
-	public int getRuleId() {
+	public Integer getRuleId() {
 		return ruleId;
 	}
 
-	public void setRuleId(int ruleId) {
+	public void setRuleId(Integer ruleId) {
 		this.ruleId = ruleId;
+	}
+
+	public Integer getTransId() {
+		return transId;
+	}
+
+	public void setTransId(Integer transId) {
+		this.transId = transId;
 	}
 
 }

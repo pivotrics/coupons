@@ -60,7 +60,7 @@ public class CouponsController {
 
 		Transactions response = couponService.createTransaction(transactionRequest);
 		logger.info("Order details saved succesfully");
-		GeneratedCoupons generatedCoupons = couponService.assignCouponToCustomer(transactionRequest, DiscountType.EXTERNAL_REWARD);
+		GeneratedCoupons generatedCoupons = couponService.assignCouponToCustomer(transactionRequest, DiscountType.PARTNER_DISCOUNT, response.getTransId());
 
 		if (generatedCoupons != null && generatedCoupons.getCouponCode() != null) {
 			logger.info("Coupon code generated for user. Coupon code: " + generatedCoupons.getCouponCode()

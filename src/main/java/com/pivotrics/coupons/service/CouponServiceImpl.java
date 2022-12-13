@@ -1,5 +1,6 @@
 package com.pivotrics.coupons.service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,6 +8,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.pivotrics.coupons.data.CartDetails;
+import com.pivotrics.coupons.data.CartDetailsRepository;
 import com.pivotrics.coupons.data.CouponCodes;
 import com.pivotrics.coupons.data.CouponCodesRepository;
 import com.pivotrics.coupons.data.DiscountType;
@@ -14,6 +17,8 @@ import com.pivotrics.coupons.data.GeneratedCoupons;
 import com.pivotrics.coupons.data.GeneratedCouponsRepository;
 import com.pivotrics.coupons.data.OrderDetails;
 import com.pivotrics.coupons.data.OrderDetailsRepository;
+import com.pivotrics.coupons.data.Products;
+import com.pivotrics.coupons.data.ProductsRepository;
 import com.pivotrics.coupons.data.Rules;
 import com.pivotrics.coupons.data.RulesRepository;
 import com.pivotrics.coupons.data.Stores;
@@ -23,6 +28,7 @@ import com.pivotrics.coupons.data.TransactionsRepository;
 import com.pivotrics.coupons.model.CouponCodeRequest;
 import com.pivotrics.coupons.model.CouponDetailsResponse;
 import com.pivotrics.coupons.model.GetCouponCodeRequestModel;
+import com.pivotrics.coupons.model.Item;
 import com.pivotrics.coupons.model.RulesRequestModel;
 import com.pivotrics.coupons.model.TransactionRequest;
 
@@ -47,6 +53,12 @@ public class CouponServiceImpl implements CouponService {
 	@Autowired
 	GeneratedCouponsRepository generatedCouponsRepository;
 
+	@Autowired
+	CartDetailsRepository cartDetailsRepository;
+
+	@Autowired
+	ProductsRepository productsRepository;
+
 	@Override
 	public List<Stores> getAllStores() {
 
@@ -61,32 +73,71 @@ public class CouponServiceImpl implements CouponService {
 		Transactions transaction = new Transactions();
 		transaction.setStoreId(request.getStoreId());
 		transaction.setPhoneNo(request.getPhoneNumber());
+		// transaction.setCreatedOn(LocalDateTime.now());
 		Transactions result = transactionRepository.save(transaction);
 
 		int transId = result.getTransId();
 		OrderDetails orderDetails = new OrderDetails();
 		orderDetails.setTransId(transId);
+		orderDetails.setOrderId(request.getOrderId());
+		orderDetails.setOrderStatus(request.getOrderStatus());
 		OrderDetails ordResult = orderDetailsRepository.save(orderDetails);
-		updateCouponDetails(request);
+
+		addProductDetails(request, ordResult);
+
+		updateCouponDetails(request, ordResult);
 
 		return transaction;
 	}
 
-	private void updateCouponDetails(TransactionRequest request) {
+	private void addProductDetails(TransactionRequest request, OrderDetails ordResult) {
+//		CartDetails cartDetails = new CartDetails();
+//
+//		cartDetails.setOrderId(null);
+//		cartDetails.setTotal(request.getOrderDetails().getTotal());
+		List<Products> products = new ArrayList();
 
-		if (request.getCouponDetails() != null && request.getCouponDetails().getCouponCode() != null
-				&& request.getCouponDetails().isApplied()) {
+		if (request != null && request.getOrderDetails() != null && request.getOrderDetails().getItems() != null
+				&& !request.getOrderDetails().getItems().isEmpty()) {
+			products = request.getOrderDetails().getItems().stream().map(e -> createProduct(e, ordResult))
+					.collect(Collectors.toList());
+
+		}
+//		cartDetails.setProducts(products);
+	//	cartDetailsRepository.save(cartDetails);
+	}
+
+	private Products createProduct(Item item, OrderDetails ordResult) {
+		Products product = new Products();
+		if (item != null) {
+			product.setDiscount(item.getDiscount());
+			product.setPrice(item.getPrice());
+			product.setProductId(item.getProductId());
+			product.setProductName(item.getProductName());
+			product.setQuantity(item.getQuantity());
+			product.setOrderId(ordResult.getOrderId());
+			productsRepository.save(product);
+		}
+		return product;
+	}
+
+	private void updateCouponDetails(TransactionRequest request, OrderDetails ordResult) {
+
+		if (ordResult != null && request.getCouponDetails() != null
+				&& request.getCouponDetails().getCouponCode() != null && request.getCouponDetails().isApplied()) {
 			GeneratedCoupons couponDetails = generatedCouponsRepository
 					.findByCouponCode(request.getCouponDetails().getCouponCode());
 			if (couponDetails != null) {
 				couponDetails.setRedeemed(true);
+				couponDetails.setTransId(ordResult.getTransId());
 				generatedCouponsRepository.save(couponDetails);
+
 			}
 		}
 	}
 
 	@Override
-		public Rules addRules(RulesRequestModel request) {
+	public Rules addRules(RulesRequestModel request) {
 
 		Rules rules = new Rules();
 		rules.setIssuer(request.getIssuer());
@@ -97,13 +148,14 @@ public class CouponServiceImpl implements CouponService {
 	}
 
 	@Override
-	public GeneratedCoupons assignCouponToCustomer(TransactionRequest request, DiscountType discounType ) {
+	public GeneratedCoupons assignCouponToCustomer(TransactionRequest request, DiscountType discounType, Integer transid) {
 		GeneratedCoupons coupon = new GeneratedCoupons();
 		coupon.setCustomerPhoneNo(request.getPhoneNumber());
 		coupon.setIssuerStore(request.getStoreId());
 		coupon.setRedeemed(false);
 		coupon.setSessionId(request.getSessionId());
 		coupon.setDiscountType(discounType);
+		coupon.setTransId(transid);
 		System.out.print(discounType);
 		String couponCode = String.valueOf((long) (Math.random() * Math.pow(10, 10)));
 		coupon.setCouponCode(couponCode.toString().toUpperCase());
@@ -126,7 +178,7 @@ public class CouponServiceImpl implements CouponService {
 		CouponDetailsResponse couponDetailsResponse = new CouponDetailsResponse();
 		String targetStore = request.getStoreId();
 		List<GeneratedCoupons> couponDetails = generatedCouponsRepository
-				.findByCustomerPhoneNo(request.getPhoneNumber());
+				.findByExternalNCustomerPhoneNo(request.getPhoneNumber(), DiscountType.PARTNER_DISCOUNT.name());
 		if (couponDetails != null && couponDetails.size() > 0) {
 			GeneratedCoupons coupon = couponDetails.get(0);
 
@@ -140,14 +192,14 @@ public class CouponServiceImpl implements CouponService {
 				couponDetailsResponse.setDiscount(rule.getDiscount());
 			}
 		}
-		
+
 		GeneratedCoupons internalCoupon = getInternalCoupon(request);
-		
-		if(internalCoupon != null) {
-			
+
+		if (internalCoupon != null) {
+
 			Rules rule = rulesRepository.findRuleByIssuerAndDiscountType(internalCoupon.getIssuerStore().toString(),
-					DiscountType.INTERNAL_LOYALTY.name());
-			if (rule != null && rule.getDiscount() > couponDetailsResponse.getDiscount()  ) {
+					DiscountType.INSIDER_DISCOUNT.name());
+			if (rule != null && rule.getDiscount() > couponDetailsResponse.getDiscount()) {
 				internalCoupon.setRuleId(rule.getRuleId());
 				generatedCouponsRepository.save(internalCoupon);
 				couponDetailsResponse.setCouponCode(internalCoupon.getCouponCode());
@@ -159,15 +211,15 @@ public class CouponServiceImpl implements CouponService {
 	}
 
 	private GeneratedCoupons getInternalCoupon(TransactionRequest request) {
-		
+
 		GeneratedCoupons coupon = null;
-		
+
 		coupon = generatedCouponsRepository.findBySessionId(request.getSessionId());
-		
-		if(coupon == null) {
-			coupon =  assignCouponToCustomer(request, DiscountType.INTERNAL_LOYALTY);		  	
-		} 
-		
+
+		if (coupon == null) {
+			coupon = assignCouponToCustomer(request, DiscountType.INSIDER_DISCOUNT, null);
+		}
+
 		// TODO Auto-generated method stub
 		return coupon;
 	}

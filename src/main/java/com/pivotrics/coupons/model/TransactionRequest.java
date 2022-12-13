@@ -1,6 +1,7 @@
 package com.pivotrics.coupons.model;
 
 import com.pivotrics.coupons.data.CouponDetails;
+import com.pivotrics.coupons.data.OrderStatus;
 
 public class TransactionRequest {
 
@@ -10,7 +11,24 @@ public class TransactionRequest {
 	private CouponDetails couponDetails;
 	private CustomerDetails customerDetails;
 	private String sessionId;
-	
+	private String orderId;
+	private OrderStatus orderStatus;
+
+	public String getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(String orderId) {
+		this.orderId = orderId;
+	}
+
+	public OrderStatus getOrderStatus() {
+		return orderStatus;
+	}
+
+	public void setOrderStatus(OrderStatus orderStatus) {
+		this.orderStatus = orderStatus;
+	}
 
 	public String getStoreId() {
 		return storeId;
@@ -36,14 +54,6 @@ public class TransactionRequest {
 		this.couponDetails = couponDetails;
 	}
 
-	public OrderDetails getCartDetails() {
-		return orderDetails;
-	}
-
-	public void setCartDetails(OrderDetails cartDetails) {
-		this.orderDetails = cartDetails;
-	}
-	
 	public CustomerDetails getCustomerDetails() {
 		return customerDetails;
 	}
@@ -51,7 +61,15 @@ public class TransactionRequest {
 	public void setCustomerDetails(CustomerDetails customerDetails) {
 		this.customerDetails = customerDetails;
 	}
-	
+
+	public OrderDetails getOrderDetails() {
+		return orderDetails;
+	}
+
+	public void setOrderDetails(OrderDetails orderDetails) {
+		this.orderDetails = orderDetails;
+	}
+
 	public String getSessionId() {
 		return sessionId;
 	}

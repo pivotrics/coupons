@@ -1,12 +1,36 @@
-package com.pivotrics.coupons.model;
+package com.pivotrics.coupons.data;
 
-public class Item {
 
+import java.io.Serializable;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="products")
+public class Products implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private int pid;
 	private String productName;
 	private Integer quantity;
 	private double price;
 	private Integer discount;
 	private String productId;
+	private String orderId;
+
+	public String getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(String orderId) {
+		this.orderId = orderId;
+	}
 
 	public String getProductName() {
 		return productName;
@@ -40,6 +64,7 @@ public class Item {
 		this.discount = discount;
 	}
 
+
 	public String getProductId() {
 		return productId;
 	}
@@ -48,6 +73,12 @@ public class Item {
 		this.productId = productId;
 	}
 
+	public int getPid() {
+		return pid;
+	}
+
+	
 	
 
+	
 }

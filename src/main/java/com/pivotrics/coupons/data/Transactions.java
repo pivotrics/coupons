@@ -2,13 +2,17 @@ package com.pivotrics.coupons.data;
 
 
 import java.io.Serializable;
-import java.sql.Date;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 @Entity
 @Table(name="transactions")
@@ -24,8 +28,11 @@ public class Transactions implements Serializable {
     
     private String phoneNo;
     
-    private Date date; 
-
+    @Temporal(TemporalType.TIMESTAMP)
+    @UpdateTimestamp
+    private java.util.Date createdOn;
+    
+    
 	public String getStoreId() {
 		return storeId;
 	}
@@ -46,14 +53,13 @@ public class Transactions implements Serializable {
 		return transId;
 	}
 
-	public Date getDate() {
-		return date;
+	public java.util.Date getCreatedOn() {
+		return createdOn;
 	}
 
-	public void setDate(Date date) {
-		this.date = date;
+	public void setCreatedOn(java.util.Date createdOn) {
+		this.createdOn = createdOn;
 	}
-	
-	
-	
+
+
 }
