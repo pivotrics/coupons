@@ -1,14 +1,12 @@
 package com.pivotrics.coupons.service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.pivotrics.coupons.data.CartDetails;
 import com.pivotrics.coupons.data.CartDetailsRepository;
 import com.pivotrics.coupons.data.CouponCodes;
 import com.pivotrics.coupons.data.CouponCodesRepository;
@@ -27,7 +25,6 @@ import com.pivotrics.coupons.data.Transactions;
 import com.pivotrics.coupons.data.TransactionsRepository;
 import com.pivotrics.coupons.model.CouponCodeRequest;
 import com.pivotrics.coupons.model.CouponDetailsResponse;
-import com.pivotrics.coupons.model.GetCouponCodeRequestModel;
 import com.pivotrics.coupons.model.Item;
 import com.pivotrics.coupons.model.RulesRequestModel;
 import com.pivotrics.coupons.model.TransactionRequest;
@@ -190,6 +187,8 @@ public class CouponServiceImpl implements CouponService {
 				generatedCouponsRepository.save(coupon);
 				couponDetailsResponse.setCouponCode(coupon.getCouponCode());
 				couponDetailsResponse.setDiscount(rule.getDiscount());
+				couponDetailsResponse.setDiscountType(rule.getDiscountType().name());
+				couponDetailsResponse.setStoreId(request.getStoreId());
 			}
 		}
 
@@ -204,6 +203,8 @@ public class CouponServiceImpl implements CouponService {
 				generatedCouponsRepository.save(internalCoupon);
 				couponDetailsResponse.setCouponCode(internalCoupon.getCouponCode());
 				couponDetailsResponse.setDiscount(rule.getDiscount());
+				couponDetailsResponse.setDiscountType(rule.getDiscountType().name());
+				couponDetailsResponse.setStoreId(request.getStoreId());
 			}
 		}
 		// TODO Auto-generated method stub
