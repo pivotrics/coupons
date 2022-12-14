@@ -5,7 +5,16 @@ import java.util.List;
 public class CustomerDetails {
 	public String firstName;
 	public String lastName;
+	public String email;
 	public List<Address> addressList;
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
 
 	public String getFirstName() {
 		return firstName;

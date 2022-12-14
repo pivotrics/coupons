@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import com.pivotrics.coupons.data.CartDetailsRepository;
 import com.pivotrics.coupons.data.CouponCodes;
 import com.pivotrics.coupons.data.CouponCodesRepository;
+import com.pivotrics.coupons.data.CustomerProfile;
+import com.pivotrics.coupons.data.CustomerProfileRepository;
 import com.pivotrics.coupons.data.DiscountType;
 import com.pivotrics.coupons.data.GeneratedCoupons;
 import com.pivotrics.coupons.data.GeneratedCouponsRepository;
@@ -28,6 +30,7 @@ import com.pivotrics.coupons.model.CouponDetailsResponse;
 import com.pivotrics.coupons.model.Item;
 import com.pivotrics.coupons.model.RulesRequestModel;
 import com.pivotrics.coupons.model.TransactionRequest;
+import com.pivotrics.coupons.service.ServiceHelper;
 
 @Service
 public class CouponServiceImpl implements CouponService {
@@ -55,6 +58,9 @@ public class CouponServiceImpl implements CouponService {
 
 	@Autowired
 	ProductsRepository productsRepository;
+	
+	@Autowired
+	CustomerProfileRepository customerProfileRepository;
 
 	@Override
 	public List<Stores> getAllStores() {
@@ -85,6 +91,23 @@ public class CouponServiceImpl implements CouponService {
 		updateCouponDetails(request, ordResult);
 
 		return transaction;
+	}
+
+	private void addCustomerDetails(TransactionRequest request) {
+		CustomerProfile result = null;
+		 result = customerProfileRepository.findByCustomerPhoneNo(request.getPhoneNumber());
+		if(result == null) {
+			if(request != null && request.getCustomerDetails() != null) {
+				CustomerProfile customer = new CustomerProfile();
+				customer.setFirstName(request.getCustomerDetails().getFirstName());
+				customer.setLastName(request.getCustomerDetails().getLastName());
+				customer.setEmail(request.getCustomerDetails().getEmail());
+				customer.setPhoneNumber(request.getPhoneNumber());
+				customerProfileRepository.save(customer);
+			}
+			
+		}
+		
 	}
 
 	private void addProductDetails(TransactionRequest request, OrderDetails ordResult) {
@@ -154,7 +177,7 @@ public class CouponServiceImpl implements CouponService {
 		coupon.setDiscountType(discounType);
 		coupon.setTransId(transid);
 		System.out.print(discounType);
-		String couponCode = String.valueOf((long) (Math.random() * Math.pow(10, 10)));
+		String couponCode = ServiceHelper.generateCouponCode(request);
 		coupon.setCouponCode(couponCode.toString().toUpperCase());
 		GeneratedCoupons response = generatedCouponsRepository.save(coupon);
 		return response;
@@ -173,6 +196,7 @@ public class CouponServiceImpl implements CouponService {
 	public CouponDetailsResponse getCouponCode(TransactionRequest request) {
 
 		CouponDetailsResponse couponDetailsResponse = new CouponDetailsResponse();
+		addCustomerDetails(request);		
 		String targetStore = request.getStoreId();
 		List<GeneratedCoupons> couponDetails = generatedCouponsRepository
 				.findByExternalNCustomerPhoneNo(request.getPhoneNumber(), DiscountType.PARTNER_DISCOUNT.name());
