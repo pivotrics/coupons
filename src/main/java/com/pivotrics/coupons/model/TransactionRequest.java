@@ -81,7 +81,7 @@ public class TransactionRequest {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		String str = this.phoneNumber + this.storeId;
+		String str = this.phoneNumber + " " + this.storeId;
 		return str.toString();
 	}
 

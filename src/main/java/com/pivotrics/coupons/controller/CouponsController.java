@@ -92,6 +92,8 @@ public class CouponsController {
 	@PostMapping(value = "/get-coupon-code", consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {
 			MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<CouponDetailsResponse> getCouponCode(@RequestBody TransactionRequest request) {
+		
+		System.out.println("TransactionRequest: " + request.toString());
 
 		CouponDetailsResponse response = couponService.getCouponCode(request);
 		if (response != null && response.getCouponCode() != null) {
