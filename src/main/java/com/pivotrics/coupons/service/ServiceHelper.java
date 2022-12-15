@@ -12,7 +12,7 @@ public class ServiceHelper {
 
 			String name = request.getCustomerDetails().getFirstName() + request.getCustomerDetails().getLastName();
 			if (name != null) {
-				couponCode = name.toUpperCase() + couponCode;
+				couponCode = name.toLowerCase() + couponCode;
 			}
 		}
 		return couponCode;

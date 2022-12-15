@@ -58,7 +58,7 @@ public class CouponServiceImpl implements CouponService {
 
 	@Autowired
 	ProductsRepository productsRepository;
-	
+
 	@Autowired
 	CustomerProfileRepository customerProfileRepository;
 
@@ -84,6 +84,9 @@ public class CouponServiceImpl implements CouponService {
 		orderDetails.setTransId(transId);
 		orderDetails.setOrderId(request.getOrderId());
 		orderDetails.setOrderStatus(request.getOrderStatus());
+		if (request.getOrderDetails() != null) {
+			orderDetails.setTotal(request.getOrderDetails().getTotal());
+		}
 		OrderDetails ordResult = orderDetailsRepository.save(orderDetails);
 
 		addProductDetails(request, ordResult);
@@ -95,9 +98,9 @@ public class CouponServiceImpl implements CouponService {
 
 	private void addCustomerDetails(TransactionRequest request) {
 		CustomerProfile result = null;
-		 result = customerProfileRepository.findByCustomerPhoneNo(request.getPhoneNumber());
-		if(result == null) {
-			if(request != null && request.getCustomerDetails() != null) {
+		result = customerProfileRepository.findByCustomerPhoneNo(request.getPhoneNumber());
+		if (result == null) {
+			if (request != null && request.getCustomerDetails() != null) {
 				CustomerProfile customer = new CustomerProfile();
 				customer.setFirstName(request.getCustomerDetails().getFirstName());
 				customer.setLastName(request.getCustomerDetails().getLastName());
@@ -105,9 +108,9 @@ public class CouponServiceImpl implements CouponService {
 				customer.setPhoneNumber(request.getPhoneNumber());
 				customerProfileRepository.save(customer);
 			}
-			
+
 		}
-		
+
 	}
 
 	private void addProductDetails(TransactionRequest request, OrderDetails ordResult) {
@@ -124,7 +127,7 @@ public class CouponServiceImpl implements CouponService {
 
 		}
 //		cartDetails.setProducts(products);
-	//	cartDetailsRepository.save(cartDetails);
+		// cartDetailsRepository.save(cartDetails);
 	}
 
 	private Products createProduct(Item item, OrderDetails ordResult) {
@@ -168,7 +171,8 @@ public class CouponServiceImpl implements CouponService {
 	}
 
 	@Override
-	public GeneratedCoupons assignCouponToCustomer(TransactionRequest request, DiscountType discounType, Integer transid) {
+	public GeneratedCoupons assignCouponToCustomer(TransactionRequest request, DiscountType discounType,
+			Integer transid) {
 		GeneratedCoupons coupon = new GeneratedCoupons();
 		coupon.setCustomerPhoneNo(request.getPhoneNumber());
 		coupon.setIssuerStore(request.getStoreId());
@@ -178,7 +182,7 @@ public class CouponServiceImpl implements CouponService {
 		coupon.setTransId(transid);
 		System.out.print(discounType);
 		String couponCode = ServiceHelper.generateCouponCode(request);
-		coupon.setCouponCode(couponCode.toString().toUpperCase());
+		coupon.setCouponCode(couponCode);
 		GeneratedCoupons response = generatedCouponsRepository.save(coupon);
 		return response;
 
@@ -196,23 +200,26 @@ public class CouponServiceImpl implements CouponService {
 	public CouponDetailsResponse getCouponCode(TransactionRequest request) {
 
 		CouponDetailsResponse couponDetailsResponse = new CouponDetailsResponse();
-		addCustomerDetails(request);		
+		addCustomerDetails(request);
 		String targetStore = request.getStoreId();
 		List<GeneratedCoupons> couponDetails = generatedCouponsRepository
 				.findByExternalNCustomerPhoneNo(request.getPhoneNumber(), DiscountType.PARTNER_DISCOUNT.name());
 		if (couponDetails != null && couponDetails.size() > 0) {
-			GeneratedCoupons coupon = couponDetails.get(0);
+			GeneratedCoupons coupon = getPartnerStoreCoupon(couponDetails, request);
 
-			List<Rules> rules = rulesRepository.findRuleByIssuerAndTragetStore(coupon.getIssuerStore().toString(),
-					targetStore);
-			if (rules != null && rules.size() > 0) {
-				Rules rule = rules.get(0);
-				coupon.setRuleId(rule.getRuleId());
-				generatedCouponsRepository.save(coupon);
-				couponDetailsResponse.setCouponCode(coupon.getCouponCode());
-				couponDetailsResponse.setDiscount(rule.getDiscount());
-				couponDetailsResponse.setDiscountType(rule.getDiscountType().name());
-				couponDetailsResponse.setStoreId(request.getStoreId());
+			if (coupon != null) {
+				List<Rules> rules = rulesRepository.findRuleByIssuerAndTragetStore(coupon.getIssuerStore().toString(),
+						targetStore);
+				if (rules != null && rules.size() > 0) {
+					Rules rule = rules.get(0);
+					coupon.setRuleId(rule.getRuleId());
+					generatedCouponsRepository.save(coupon);
+					couponDetailsResponse.setCouponCode(coupon.getCouponCode());
+					couponDetailsResponse.setDiscount(rule.getDiscount());
+					couponDetailsResponse.setDiscountType(rule.getDiscountType().name());
+					couponDetailsResponse.setStoreId(request.getStoreId());
+					couponDetailsResponse.setIssuerStoreId(rule.getIssuer());
+				}
 			}
 		}
 
@@ -233,6 +240,16 @@ public class CouponServiceImpl implements CouponService {
 		}
 		// TODO Auto-generated method stub
 		return couponDetailsResponse;
+	}
+
+	private GeneratedCoupons getPartnerStoreCoupon(List<GeneratedCoupons> couponDetails, TransactionRequest request) {
+		List<GeneratedCoupons> generatedCoupons = couponDetails.stream()
+				.filter(e -> !e.getIssuerStore().equals(request.getStoreId())).collect(Collectors.toList());
+		// TODO Auto-generated method stub
+		if (generatedCoupons != null && generatedCoupons.size() > 0) {
+			return generatedCoupons.get(0);
+		}
+		return null;
 	}
 
 	private GeneratedCoupons getInternalCoupon(TransactionRequest request) {
