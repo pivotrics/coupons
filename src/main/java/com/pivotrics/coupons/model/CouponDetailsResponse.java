@@ -6,6 +6,7 @@ public class CouponDetailsResponse {
 	private double discount;
 	private String discountType;
 	private String storeId;
+	private String issuerStoreId;
 
 	public String getDiscountType() {
 		return discountType;
@@ -38,5 +39,16 @@ public class CouponDetailsResponse {
 	public void setDiscount(double discount) {
 		this.discount = discount;
 	}
+
+	public String getIssuerStoreId() {
+		return issuerStoreId;
+	}
+
+	public void setIssuerStoreId(String issuerStoreId) {
+		this.issuerStoreId = issuerStoreId;
+	}
+
+	
+	
 
 }
