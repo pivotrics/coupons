@@ -7,6 +7,34 @@ public class CouponDetailsResponse {
 	private String discountType;
 	private String storeId;
 	private String issuerStoreId;
+	private String primaryMessage;
+	private String secondaryMessage;
+	private String targetStoreId;
+
+	
+	public String getTargetStoreId() {
+		return targetStoreId;
+	}
+
+	public void setTargetStoreId(String targetStoreId) {
+		this.targetStoreId = targetStoreId;
+	}
+
+	public String getPrimaryMessage() {
+		return primaryMessage;
+	}
+
+	public void setPrimaryMessage(String primaryMessage) {
+		this.primaryMessage = primaryMessage;
+	}
+
+	public String getSecondaryMessage() {
+		return secondaryMessage;
+	}
+
+	public void setSecondaryMessage(String secondaryMessage) {
+		this.secondaryMessage = secondaryMessage;
+	}
 
 	public String getDiscountType() {
 		return discountType;

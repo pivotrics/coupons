@@ -7,6 +7,16 @@ public class Item {
 	private double price;
 	private Integer discount;
 	private String productId;
+	private String category;
+	
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
 
 	public String getProductName() {
 		return productName;
