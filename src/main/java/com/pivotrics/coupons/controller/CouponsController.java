@@ -23,6 +23,7 @@ import com.pivotrics.coupons.data.Stores;
 import com.pivotrics.coupons.data.Transactions;
 import com.pivotrics.coupons.model.CouponCodeRequest;
 import com.pivotrics.coupons.model.CouponDetailsResponse;
+import com.pivotrics.coupons.model.CouponDetailsResponseWrapper;
 import com.pivotrics.coupons.model.RulesRequestModel;
 import com.pivotrics.coupons.model.TransactionRequest;
 import com.pivotrics.coupons.service.CouponService;
@@ -91,13 +92,13 @@ public class CouponsController {
 
 	@PostMapping(value = "/get-coupon-code", consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {
 			MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<CouponDetailsResponse> getCouponCode(@RequestBody TransactionRequest request) {
+	public ResponseEntity<CouponDetailsResponseWrapper> getCouponCode(@RequestBody TransactionRequest request) {
 		
 		System.out.println("TransactionRequest: " + request.toString());
 
-		CouponDetailsResponse response = couponService.getCouponCode(request);
-		if (response != null && response.getCouponCode() != null) {
-			logger.info("Coupon code retrieved successfully. Discount: " + response.getDiscount() + "% Coupon code:" + response.getCouponCode() );
+		CouponDetailsResponseWrapper response = couponService.getCouponCode(request);
+		if (response != null) {
+			logger.info("Coupon code retrieved successfully. Discount: "); // + response.getDiscount() + "% Coupon code:" + response.getCouponCode() );
 		} else {
 			logger.info("No Coupon code is available for this user");
 		}

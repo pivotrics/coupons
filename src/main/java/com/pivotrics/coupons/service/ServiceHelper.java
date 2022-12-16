@@ -17,6 +17,14 @@ public class ServiceHelper {
 		}
 		return couponCode;
 	}
+	public static String generateCouponCode(String name) {
+
+		String couponCode = String.valueOf((long) (Math.random() * Math.pow(10, 10)));
+		if (name != null) {
+			couponCode = name.toLowerCase() + couponCode;
+		}
+		return couponCode;
+	}
 }
 
 

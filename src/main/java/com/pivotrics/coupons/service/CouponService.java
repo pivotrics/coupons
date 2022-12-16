@@ -10,6 +10,7 @@ import com.pivotrics.coupons.data.Stores;
 import com.pivotrics.coupons.data.Transactions;
 import com.pivotrics.coupons.model.CouponCodeRequest;
 import com.pivotrics.coupons.model.CouponDetailsResponse;
+import com.pivotrics.coupons.model.CouponDetailsResponseWrapper;
 import com.pivotrics.coupons.model.GetCouponCodeRequestModel;
 import com.pivotrics.coupons.model.RulesRequestModel;
 import com.pivotrics.coupons.model.TransactionRequest;
@@ -26,5 +27,5 @@ public interface CouponService {
 
 	List<CouponCodes> addCouponCode(CouponCodeRequest request);
 
-	CouponDetailsResponse getCouponCode(TransactionRequest request);
+	CouponDetailsResponseWrapper getCouponCode(TransactionRequest request);
 }

@@ -30,6 +30,8 @@ public class GeneratedCoupons implements Serializable {
 	private boolean redeemed;
 	@Enumerated(EnumType.STRING)
 	private DiscountType discountType;
+	private String targetStore;
+	private String targetCategory;
 
 	@Temporal(TemporalType.TIMESTAMP)
 	@UpdateTimestamp
@@ -38,6 +40,25 @@ public class GeneratedCoupons implements Serializable {
 	private String sessionId;
 	private Integer ruleId;
 	private Integer transId;
+	
+	
+	
+
+	public String getTargetCategory() {
+		return targetCategory;
+	}
+
+	public void setTargetCategory(String targetCategory) {
+		this.targetCategory = targetCategory;
+	}
+
+	public String getTargetStore() {
+		return targetStore;
+	}
+
+	public void setTargetStore(String targetStore) {
+		this.targetStore = targetStore;
+	}
 
 	public DiscountType getDiscountType() {
 		return discountType;

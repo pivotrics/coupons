@@ -27,10 +27,12 @@ import com.pivotrics.coupons.data.Transactions;
 import com.pivotrics.coupons.data.TransactionsRepository;
 import com.pivotrics.coupons.model.CouponCodeRequest;
 import com.pivotrics.coupons.model.CouponDetailsResponse;
+import com.pivotrics.coupons.model.CouponDetailsResponseWrapper;
 import com.pivotrics.coupons.model.Item;
 import com.pivotrics.coupons.model.RulesRequestModel;
 import com.pivotrics.coupons.model.TransactionRequest;
 import com.pivotrics.coupons.service.ServiceHelper;
+import com.pivotrics.coupons.data.GlobalConstants;
 
 @Service
 public class CouponServiceImpl implements CouponService {
@@ -61,6 +63,8 @@ public class CouponServiceImpl implements CouponService {
 
 	@Autowired
 	CustomerProfileRepository customerProfileRepository;
+
+	RuleEngine ruleEngine = new RuleEngine();
 
 	@Override
 	public List<Stores> getAllStores() {
@@ -154,7 +158,6 @@ public class CouponServiceImpl implements CouponService {
 				couponDetails.setRedeemed(true);
 				couponDetails.setTransId(ordResult.getTransId());
 				generatedCouponsRepository.save(couponDetails);
-
 			}
 		}
 	}
@@ -173,6 +176,11 @@ public class CouponServiceImpl implements CouponService {
 	@Override
 	public GeneratedCoupons assignCouponToCustomer(TransactionRequest request, DiscountType discounType,
 			Integer transid) {
+
+		OfferConfig offerConfig = ruleEngine.getApplicableDiscount(request, discounType);
+		if (offerConfig == null) {
+			return null;
+		}
 		GeneratedCoupons coupon = new GeneratedCoupons();
 		coupon.setCustomerPhoneNo(request.getPhoneNumber());
 		coupon.setIssuerStore(request.getStoreId());
@@ -182,7 +190,18 @@ public class CouponServiceImpl implements CouponService {
 		coupon.setTransId(transid);
 		System.out.print(discounType);
 		String couponCode = ServiceHelper.generateCouponCode(request);
-		coupon.setCouponCode(couponCode);
+		if (offerConfig != null) {
+			coupon.setCouponCode(offerConfig.couponCode);
+			coupon.setDiscount(offerConfig.discount);
+		}
+		if (discounType.equals(DiscountType.PARTNER_DISCOUNT)) {
+			if (request.getStoreId().equals(GlobalConstants.STORE1)) {
+				coupon.setTargetStore(GlobalConstants.STORE2);
+			} else {
+				coupon.setTargetStore(GlobalConstants.STORE1);
+			}
+		}
+
 		GeneratedCoupons response = generatedCouponsRepository.save(coupon);
 		return response;
 
@@ -197,28 +216,48 @@ public class CouponServiceImpl implements CouponService {
 	}
 
 	@Override
-	public CouponDetailsResponse getCouponCode(TransactionRequest request) {
+	public CouponDetailsResponseWrapper getCouponCode(TransactionRequest request) {
 
-		CouponDetailsResponse couponDetailsResponse = new CouponDetailsResponse();
+		CouponDetailsResponseWrapper wrapper = new CouponDetailsResponseWrapper();
+
+		List<CouponDetailsResponse> couponDetailsList = new ArrayList();
+
 		addCustomerDetails(request);
 		String targetStore = request.getStoreId();
-		List<GeneratedCoupons> couponDetails = generatedCouponsRepository
-				.findByExternalNCustomerPhoneNo(request.getPhoneNumber(), DiscountType.PARTNER_DISCOUNT.name());
+		String issuerStore = null;
+		if (request.getStoreId().equals(GlobalConstants.STORE1)) {
+			issuerStore = GlobalConstants.STORE2;
+		} else {
+			issuerStore = GlobalConstants.STORE1;
+		}
+
+		List<GeneratedCoupons> couponDetails = generatedCouponsRepository.findByPartnerDiscount(
+				request.getPhoneNumber(), DiscountType.PARTNER_DISCOUNT.name(), issuerStore, targetStore);
 		if (couponDetails != null && couponDetails.size() > 0) {
 			GeneratedCoupons coupon = getPartnerStoreCoupon(couponDetails, request);
 
 			if (coupon != null) {
-				List<Rules> rules = rulesRepository.findRuleByIssuerAndTragetStore(coupon.getIssuerStore().toString(),
-						targetStore);
-				if (rules != null && rules.size() > 0) {
-					Rules rule = rules.get(0);
-					coupon.setRuleId(rule.getRuleId());
+
+				RuleEngine ruleEngine = new RuleEngine();
+
+				OfferConfig offerConfig = ruleEngine.getPartnerOfferConfig(request, coupon);
+
+				if (offerConfig != null) {
+					coupon.setDiscount(offerConfig.discount);
 					generatedCouponsRepository.save(coupon);
-					couponDetailsResponse.setCouponCode(coupon.getCouponCode());
-					couponDetailsResponse.setDiscount(rule.getDiscount());
-					couponDetailsResponse.setDiscountType(rule.getDiscountType().name());
-					couponDetailsResponse.setStoreId(request.getStoreId());
-					couponDetailsResponse.setIssuerStoreId(rule.getIssuer());
+
+					CouponDetailsResponse couponDetailsResponse = new CouponDetailsResponse();
+					couponDetailsResponse.setCouponCode(offerConfig.couponCode);
+					couponDetailsResponse.setDiscount(offerConfig.discount);
+					couponDetailsResponse.setDiscountType(coupon.getDiscountType().name());
+					couponDetailsResponse.setStoreId(coupon.getIssuerStore());
+					couponDetailsResponse.setPrimaryMessage(offerConfig.primaryText);
+					couponDetailsResponse.setSecondaryMessage(offerConfig.secondaryText);
+					couponDetailsResponse.setIssuerStoreId(issuerStore);
+					couponDetailsResponse.setTargetStoreId(targetStore);
+					wrapper.setPartnerDiscount(couponDetailsResponse);
+					// couponDetailsList.add(couponDetailsResponse);
+
 				}
 			}
 		}
@@ -227,20 +266,71 @@ public class CouponServiceImpl implements CouponService {
 
 		if (internalCoupon != null) {
 
-			Rules rule = rulesRepository.findRuleByIssuerAndDiscountType(internalCoupon.getIssuerStore().toString(),
-					DiscountType.INSIDER_DISCOUNT.name());
-			if (rule != null && rule.getDiscount() > couponDetailsResponse.getDiscount()) {
-				internalCoupon.setRuleId(rule.getRuleId());
+			OfferConfig offerInternal = ruleEngine.getApplicableDiscount(request, DiscountType.INSIDER_DISCOUNT);
+
+			if (offerInternal != null) {
+				internalCoupon.setDiscount(offerInternal.discount);
 				generatedCouponsRepository.save(internalCoupon);
-				couponDetailsResponse.setCouponCode(internalCoupon.getCouponCode());
-				couponDetailsResponse.setDiscount(rule.getDiscount());
-				couponDetailsResponse.setDiscountType(rule.getDiscountType().name());
-				couponDetailsResponse.setStoreId(request.getStoreId());
+				CouponDetailsResponse couponDetailsResponse = new CouponDetailsResponse();
+				couponDetailsResponse.setCouponCode(offerInternal.couponCode);
+				couponDetailsResponse.setDiscount(offerInternal.discount);
+				couponDetailsResponse.setDiscountType(internalCoupon.getDiscountType().name());
+				couponDetailsResponse.setStoreId(internalCoupon.getIssuerStore());
+				couponDetailsResponse.setPrimaryMessage(offerInternal.primaryText);
+				couponDetailsResponse.setSecondaryMessage(offerInternal.secondaryText);
+				couponDetailsResponse.setIssuerStoreId(request.getStoreId());
+				couponDetailsList.add(couponDetailsResponse);
+				wrapper.setInsiderDiscount(couponDetailsResponse);
 			}
 		}
 		// TODO Auto-generated method stub
-		return couponDetailsResponse;
+		return wrapper;
 	}
+
+//	public CouponDetailsResponse getCouponCodeOld(TransactionRequest request) {
+//
+//		CouponDetailsResponse couponDetailsResponse = new CouponDetailsResponse();
+//		addCustomerDetails(request);
+//		String targetStore = request.getStoreId();
+//		List<GeneratedCoupons> couponDetails = generatedCouponsRepository
+//				.findByExternalNCustomerPhoneNo(request.getPhoneNumber(), DiscountType.PARTNER_DISCOUNT.name());
+//		if (couponDetails != null && couponDetails.size() > 0) {
+//			GeneratedCoupons coupon = getPartnerStoreCoupon(couponDetails, request);
+//
+//			if (coupon != null) {
+//				List<Rules> rules = rulesRepository.findRuleByIssuerAndTragetStore(coupon.getIssuerStore().toString(),
+//						targetStore);
+//				if (rules != null && rules.size() > 0) {
+//					Rules rule = rules.get(0);
+//					coupon.setRuleId(rule.getRuleId());
+//					generatedCouponsRepository.save(coupon);
+//					couponDetailsResponse.setCouponCode(coupon.getCouponCode());
+//					couponDetailsResponse.setDiscount(rule.getDiscount());
+//					couponDetailsResponse.setDiscountType(rule.getDiscountType().name());
+//					couponDetailsResponse.setStoreId(request.getStoreId());
+//					couponDetailsResponse.setIssuerStoreId(rule.getIssuer());
+//				}
+//			}
+//		}
+//
+//		GeneratedCoupons internalCoupon = getInternalCoupon(request);
+//
+//		if (internalCoupon != null) {
+//
+//			Rules rule = rulesRepository.findRuleByIssuerAndDiscountType(internalCoupon.getIssuerStore().toString(),
+//					DiscountType.INSIDER_DISCOUNT.name());
+//			if (rule != null && rule.getDiscount() > couponDetailsResponse.getDiscount()) {
+//				internalCoupon.setRuleId(rule.getRuleId());
+//				generatedCouponsRepository.save(internalCoupon);
+//				couponDetailsResponse.setCouponCode(internalCoupon.getCouponCode());
+//				couponDetailsResponse.setDiscount(rule.getDiscount());
+//				couponDetailsResponse.setDiscountType(rule.getDiscountType().name());
+//				couponDetailsResponse.setStoreId(request.getStoreId());
+//			}
+//		}
+//		// TODO Auto-generated method stub
+//		return couponDetailsResponse;
+//	}
 
 	private GeneratedCoupons getPartnerStoreCoupon(List<GeneratedCoupons> couponDetails, TransactionRequest request) {
 		List<GeneratedCoupons> generatedCoupons = couponDetails.stream()
@@ -256,7 +346,8 @@ public class CouponServiceImpl implements CouponService {
 
 		GeneratedCoupons coupon = null;
 
-		coupon = generatedCouponsRepository.findBySessionId(request.getSessionId());
+		coupon = generatedCouponsRepository.findBySessionIdDiscountType(request.getSessionId(),
+				DiscountType.INSIDER_DISCOUNT.name());
 
 		if (coupon == null) {
 			coupon = assignCouponToCustomer(request, DiscountType.INSIDER_DISCOUNT, null);
