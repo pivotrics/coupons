@@ -377,7 +377,7 @@ public class RuleEngine {
 	}
 
 	private String getCategory(TransactionRequest request) {
-
+// test
 		return null;
 	}
 }
